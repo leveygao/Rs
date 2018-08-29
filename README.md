@@ -1,2 +1,2 @@
 # XBG
-# A XGB pgm for scorecard && param tune
+# R related pgm for scorecard && param tune
