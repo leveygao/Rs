@@ -1,0 +1,159 @@
+#import sas
+library(haven)
+url <- "D:\\GY\\18.1.25 JF_DATA_STRATEGY\\data\\apply_jf_dlq_num.sas7bdat"
+data<- read_sas(url)
+
+
+# total 1
+library(sqldf)
+total<-sqldf('select sum(target) as bad, count(*) as total, 
+              count(case when target=0 then t?rget end) as goodcnt,
+              count(case when target=1 then target end) as badcnt
+              from data  ')
+
+
+#tree
+library(rpart)
+library(party)
+library(rpart.plot)
+
+data1 <- subset(data, select = -memberid) 
+
+train<-sample(nrow(data1),size=nrow(d?ta1)*0.7,replace = F)
+
+training_set<-data1[train,]   #提取样本数据集
+test_set<-data1[-train,]   #提取测试数据集
+
+#tree
+tree_prior <- rpart(target ~ ., method = "class",
+                    data = training_set, parms = list(prior = c(0.7, 0.3)),
+           ?        control = rpart.control(cp = 0.001))
+
+
+plot_tris<-rpart.plot(tree_prior, branch=1 , branch.type= 1, type= 2, extra= 103,  
+                      shadow.col="gray", box.col="green",  
+                      border.col="blue", split.col="red",  
+     ?                cex=0.65, main="Kyphosis-tree") 
+
+plot_tris
+
+
+#tree loss mtx
+
+ct <- rpart.control(xval=10, minsplit=100,    cp=0.001)  
+tree_loss <- rpart(target ~ ., method = "class",
+                    data = training_set, 
+                    parms = l?st(loss = matrix(c(0, 10, 1, 0), ncol = 2)),
+                    control = ct)
+                    
+plot_loss<-rpart.plot(tree_loss, branch=1 , branch.type= 1, type= 2, extra= 103,  
+                      shadow.col="gray", box.col="green",  
+             ?        border.col="blue", split.col="red",  
+                      cex=0.65, main="Kyphosis-tree") 
+
+# Use printcp() to identify for which complexity parameter the cross-validated error rate is minimized
+printcp(tree_loss)
+#Create an index for of the row ?ith the minimum xerror
+index <- which.min(tree_loss$cptable[, "xerror"])
+# Create tree_min
+tree_loss_min <- tree_loss$cptable[index, "CP"]
+
+#  Prune the tree using tree_min
+ptree_prior <- prune(tree_prior, cp = tree_min)
+
+# Use prp() to plot the pruned tre?
+prp(ptree_prior)
+
+
+
+
+
+
+#1
+
+
+#minbucket = minsplit/3
+
+
+
+
+#plot split.
+
+plot_tris<-rpart.plot(iris_tree, branch=1 , branch.type= 1, type= 2, extra= 103,  
+                      shadow.col="gray", box.col="green",  
+                      border.col="blue", s?lit.col="red",  
+                      cex=0.65, main="Kyphosis-tree") 
+
+plot_tris
+#summary
+summary(iris_tree)
+
+
+
+## 交叉验证的估计误差（“xerror”列），以及标准误差(“xstd”列)，平均相对误差=xerror±xstd  
+printcp(iris_tree)
+
+
+
+# Retreive optimal cp value?based on cross-validated error
+opt_index <- which.min(grade_model$cptable[, "xerror"])
+cp_opt <- grade_model$cptable[opt_index, "CP"]
+
+# Prune the model (to optimized cp value)
+grade_model_opt <- prune(tree = grade_model, 
+                         cp = cp_?pt)
+
+
+
+
+## 我们可以用下面的办法选择具有最小xerror的cp的办法：  
+fitcp<-prune(iris_tree, cp= iris_tree$cptable[which.min(iris_tree$cptable[,"xerror"]),"CP"])  
+
+
+#cp table   
+fit2<-prune(fitcp,cp=0.0121)
+
+#plot fit2
+rpart.plot(fit2, branch=1 , branch.type= ?, type= 2, extra= 103,  
+           shadow.col="gray", box.col="green",  
+           border.col="blue", split.col="red",  
+           cex=0.65, main="Kyphosis fit2") 
+
+#rm(object)
+rm( )
+
+
+
+
+
+# valid  passrate
+urlv <- "D:\\GY\\17.12.25_EDA\\DATA\\portrait_j?10_16s.sas7bdat"
+valid<- read_sas(urlv)
+
+Member_rule<-sqldf(
+  '
+  select
+  
+  count(distinct memberid) as total_member,
+  count(distinct case when ordersuccessrate<0.4 then memberid end ) as Order_reject,
+  count(distinct case when ordersuccessrate<0.4 an? visittimeofevery<129 then memberid end ) 
+  as OrdVist_reject,
+  count(distinct case when ordersuccessrate<0.4 and visittimeofevery<129 
+  and train_avgtrainprice<78 then memberid end ) as OrdVistTrn_reject,
+  count(distinct case when  ordersuccessrate<0.? and visittimeofevery<129
+  and train_avgtrainprice<78 and avgvisitpageofday>=30
+  then memberid  end ) as OrdVistTrnpage_reject
+  
+  
+  
+  from valid  
+  ')
+
+
+
+
+
+
+
+
+

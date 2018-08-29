@@ -1,0 +1,96 @@
+#import sas
+library(haven)
+url <- "D:\\GY\\18.1.25 JF_DATA_STRATEGY\\data\\apply_jf_dlq_num.sas7bdat"
+data<- read_sas(url)
+
+
+# total 1
+library(sqldf)
+total<-sqldf('select sum(target) as bad, count(*) as total, 
+             count(case when target=0 then target end) as goodcnt,
+             count(case when target=1 then target end) as badcnt
+             from data  ')
+
+
+#tree
+library(rpart)
+library(party)
+library(rpart.plot)
+library(pROC)
+
+#data1 <- data[,  c("memberid","sex")] 
+
+name   = c("memberid","sex")
+data1 = data[,!names(data) %in% name]
+
+
+train<-sample(nrow(data1),size=nrow(data1)*0.7,replace = F)
+
+training_set<-data1[train,]   #提取样本数据集
+test_set<-data1[-train,]   #提取测试数据集
+case_weights<-ifelse(training_set$target==0,1,3) #weight
+
+#tree
+tree_prior <- rpart(target ~ ., method = "class",
+data = training_set, 
+
+parms = list(prior = c(0.65,0.35), split = "information"),
+weights=case_weights,
+control = rpart.control(minsplit = 200, minbucket = 200, cp = 0.003))
+
+
+plot_tris<-rpart.plot(tree_prior, branch=1 , branch.type= 1, type= 2, extra= 103,  
+shadow.col="gray", box.col="green",  
+border.col="blue", split.col="red",  
+cex=0.65, main="Kyphosis-tree") 
+
+plot_tris
+
+
+# Use printcp() to identify for which complexity parameter the cross-validated error rate is minimized
+printcp(tree_prior)
+#Create an index for of the row with the minimum xerror
+index_pr <- which.min(tree_prior$cptable[, "xerror"])
+# Create tree_min
+tree_prior_min <- tree_prior$cptable[index_pr, "CP"]
+
+#  Prune the tree using tree_min
+Ptree_prior <- prune(tree_prior, cp = tree_prior_min)
+
+# Use prp() to plot the pruned tree
+plot_prune<-rpart.plot(Ptree_prior, branch=1 , branch.type= 1, type= 2, extra= 103,  
+                      shadow.col="gray", box.col="green",  
+                      border.col="blue", split.col="red",  
+                      cex=0.65, main="Kyphosis-tree") 
+plot_prune
+
+
+#验证结果 
+pred_weights <- predict(tree_prior    , newdata = test_set,  type = "class")
+
+#weights 
+confmat_weights <- table(test_set$target, pred_weights)
+
+
+acc_weights <- sum(diag(confmat_weights)) / nrow(test_set)
+acc_weights
+
+
+
+#AUC
+
+logmodel<-glm(target ~ ., family=binomial(link = "logit"),na.action=na.exclude, data = training_set) 
+logmodel
+
+pred_logmodeltest <- predict(logmodel, newdata = test_set, type = "response")
+# Construct the objects containing ROC-information
+ROC_logit <- roc(test_set$target, pred_logmodeltest)
+
+
+
+# Draw all ROCs on one plot
+plot(ROC_logit)
+lines(ROC_logit, col = "blue")
+
+# Compute the AUCs
+auc(ROC_logit)
