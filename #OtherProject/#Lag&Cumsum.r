@@ -34,3 +34,15 @@ csum<-function(x){return(cumsum(x))}
 df['d']=unlist(tapply(df$a,df$group,csum))
 
 df<-transform(df,b=unlist(tapply(a,group,csum)))
+
+
+#fill missing
+
+library(data.table)
+
+dat = data.table(a = sample(c(1:3,NA),1000,replace = TRUE), b = sample(c(4:6,NA),1000,replace = TRUE))
+
+newdat=dat[, lapply(.SD, function(x) ifelse(is.na(x), mean(x,na.rm = TRUE), x) )]
+
+
+datacard[is.na(datacard)] <- 0
