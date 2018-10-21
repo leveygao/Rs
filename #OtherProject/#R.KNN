@@ -1,0 +1,36 @@
+### KNN
+# You don't have to change this!
+# The algorithm is already coded for you;
+# inspect it and try to understand how it works!
+my_knn <- function(x_pred, x, y, k){
+  m <- length(x_pred)
+  predict_knn <- rep(0, m)
+  for (i in 1:m) {
+
+    # Calculate the absolute distance between x_pred[i] and x
+    dist <- abs(x_pred[i] - x)
+
+    # Apply order() to dist, sort_index will contain
+    # the indices of elements in the dist vector, in
+    # ascending order. This means sort_index[1:k] will
+    # return the indices of the k-nearest neighbors.
+    sort_index <- order(dist)
+
+    # Apply mean() to the responses of the k-nearest neighbors
+    predict_knn[i] <- mean(y[sort_index[1:k]])
+
+  }
+  return(predict_knn)
+}
+###
+
+# world_bank_train and world_bank_test are pre-loaded
+
+# Apply your algorithm on the test set: test_output
+test_output=my_knn( world_bank_test$cgdp, world_bank_train$cgdp,world_bank_train$urb_pop, 30)
+
+# Have a look at the plot of the output
+plot(world_bank_train,
+     xlab = "GDP per Capita",
+     ylab = "Percentage Urban Population")
+points(world_bank_test$cgdp, test_output, col = "green")
