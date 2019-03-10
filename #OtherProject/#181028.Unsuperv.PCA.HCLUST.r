@@ -17,7 +17,7 @@ data=iris[,-5]
 Species=iris$Species
 
 
-# PCA ----
+#  fnPCA ----
 
 # Check column means and standard deviations
 colMeans(data)
