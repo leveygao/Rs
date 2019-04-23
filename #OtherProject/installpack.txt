@@ -1,0 +1,25 @@
+# download
+
+getPackages <- function(packs){
+  packages <- unlist(
+    tools::package_dependencies(packs, available.packages(),which=c("Depends", "Imports"), recursive=TRUE)
+  )
+  packages <- union(packs, packages)
+  packages
+}
+ 
+myPackages <- c("dplyr","sqldf","DBI","rJava","RJDBC","forecast","lubridate","xgboost","ggplot2","plyr")
+ 
+packages <- getPackages(myPackages)
+ 
+download.packages(packages, destdir="E:/R_packages/", type="source")
+
+# install
+
+library(tools)
+path <- "E:/R_packages"
+write_PACKAGES(path,type="source")
+myPackages <- c("dplyr","sqldf","DBI","rJava","RJDBC","forecast","lubridate","xgboost","ggplot2","plyr")
+install.packages(myPackages, contriburl=paste("file:",path,sep=''),type="source")
+
+ 
